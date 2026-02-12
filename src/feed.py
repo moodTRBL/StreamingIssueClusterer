@@ -76,6 +76,7 @@ class RssFetcher:
                     published_at=published_at,
                 )
             )
+            logging.info("rss 수집 성공: url=%s", rss.link)
 
         return items
 

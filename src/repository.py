@@ -71,6 +71,23 @@ def _ensure_database_url_from_dotenv(path: str = ".env") -> None:
 _ensure_database_url_from_dotenv()
 
 
+def ensure_schema(conn: Any) -> None:
+    schema_path = Path(__file__).resolve().parent.parent / "resources" / "schema.sql"
+    if not schema_path.exists():
+        raise ValueError(f"schema file not found: {schema_path}")
+
+    sql = schema_path.read_text(encoding="utf-8")
+    with _cursor(conn) as cur:
+        cur.execute(sql)
+        cur.execute(
+            """
+            ALTER TABLE issue_embedding
+                DROP COLUMN IF EXISTS sparse_indice,
+                DROP COLUMN IF EXISTS sparse_value
+            """
+        )
+
+
 class IssueRepository(Protocol):
     def create(self, ctx: object, title: str, summary: str, status: int) -> int:
         """새 이슈를 생성하고 식별자를 반환한다."""
@@ -80,6 +97,9 @@ class IssueRepository(Protocol):
 
     def update(self, ctx: object, issue_id: int) -> None:
         """이슈의 article_count 와 updated_at 을 갱신한다."""
+
+    def list_all(self, ctx: object) -> list[IssueRow]:
+        """이슈 전체 목록을 조회한다."""
 
 
 class ArticleRepository(Protocol):
@@ -165,6 +185,25 @@ class PostgresIssueRepository:
             if cur.rowcount == 0:
                 raise KeyError(f"issue not found: {issue_id}")
 
+    def list_all(self, ctx: object) -> list[IssueRow]:
+        sql = f"""
+            SELECT id, title, updated_at, article_count
+            FROM {self._table}
+            ORDER BY updated_at DESC, id DESC
+        """
+        with _cursor(self._resolve_conn(ctx)) as cur:
+            cur.execute(sql)
+            rows = cur.fetchall()
+        return [
+            IssueRow(
+                id=int(row[0]),
+                title=str(row[1]),
+                updated_at=row[2],
+                article_count=int(row[3]),
+            )
+            for row in rows
+        ]
+
     def _resolve_conn(self, ctx: object) -> Any:
         return ctx if ctx is not None else self._conn
 
@@ -236,14 +275,15 @@ class PostgresIssueEmbeddingRepository:
         self._conn = conn
         self._table = table
         self._similarity_limit = similarity_limit
+        self._drop_sparse_columns_if_exists()
 
     def create(self, ctx: object, item: Any) -> None:
         sql = f"""
-            INSERT INTO {self._table} (issue_id, dense)
-            VALUES (%s, %s::vector)
+            INSERT INTO {self._table} (issue_id, dense, created_at)
+            VALUES (%s, %s::vector, %s)
         """
         with _cursor(self._resolve_conn(ctx)) as cur:
-            cur.execute(sql, (int(item.issue_id), _to_pgvector_literal(item.dense)))
+            cur.execute(sql, (int(item.issue_id), _to_pgvector_literal(item.dense), datetime.now(timezone.utc)))
 
     def find_similar_issue_ids(self, ctx: object, dense: list[float]) -> list[int]:
         sql = f"""
@@ -283,6 +323,15 @@ class PostgresIssueEmbeddingRepository:
 
     def _resolve_conn(self, ctx: object) -> Any:
         return ctx if ctx is not None else self._conn
+
+    def _drop_sparse_columns_if_exists(self) -> None:
+        sql = f"""
+            ALTER TABLE {self._table}
+            DROP COLUMN IF EXISTS sparse_indice,
+            DROP COLUMN IF EXISTS sparse_value
+        """
+        with _cursor(self._conn) as cur:
+            cur.execute(sql)
 
 
 def _to_pgvector_literal(dense: list[float]) -> str:

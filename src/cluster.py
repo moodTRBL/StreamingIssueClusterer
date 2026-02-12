@@ -7,7 +7,8 @@ import math
 from datetime import datetime, timezone
 from typing import Any
 
-from model import IssueEmbedding, MatchCandidate
+from embedding_model import ClusterIssueEmbedding
+from model import MatchCandidate
 from repository import ArticleRepository, IssueEmbeddingRepository, IssueRepository
 from embedding import Vectorizer
 
@@ -69,7 +70,7 @@ class ClusterService:
         issue_id = self.issue_repo.create(ctx, title, "not yet summary", 1)
         self.issue_embedding_repo.create(
             ctx,
-            IssueEmbedding(
+            ClusterIssueEmbedding(
                 issue_id=issue_id,
                 dense=article_vector,
             ),

@@ -6,10 +6,6 @@ class Article(BaseModel):
     content: str
 
 
-class IssueEmbedding(BaseModel):
-    dense: list[float]
-
-
 class MatchCandidate(BaseModel):
     issue_id: int
     title: str

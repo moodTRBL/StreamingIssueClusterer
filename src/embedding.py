@@ -2,7 +2,7 @@ import logging
 
 from sentence_transformers import SentenceTransformer
 
-from model import IssueEmbedding
+from embedding_model import GeneratedEmbedding
 
         
 class Vectorizer:
@@ -11,7 +11,7 @@ class Vectorizer:
         self.dense_model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
         logging.info("모델 로드 성공")
 
-    def generate(self, ctx: object, title: str, content: str) -> IssueEmbedding:
+    def generate(self, ctx: object, title: str, content: str) -> GeneratedEmbedding:
         full_text = title + " " + content
         dense_vec = self.dense_model.encode(full_text, convert_to_numpy=True).tolist()
-        return IssueEmbedding(dense=dense_vec)
+        return GeneratedEmbedding(dense=dense_vec)
