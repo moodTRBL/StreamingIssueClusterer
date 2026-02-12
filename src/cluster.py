@@ -7,9 +7,9 @@ import math
 from datetime import datetime, timezone
 from typing import Any
 
-from .model import IssueEmbedding, MatchCandidate
-from .repository import ArticleRepository, IssueEmbeddingRepository, IssueRepository
-from .embedding import Vectorizer
+from model import IssueEmbedding, MatchCandidate
+from repository import ArticleRepository, IssueEmbeddingRepository, IssueRepository
+from embedding import Vectorizer
 
 LAMBDA_CONST = 0.1
 ALPHA_CONST = 0.8

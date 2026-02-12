@@ -1,0 +1,54 @@
+run:
+  count: 3
+  workers: 8
+
+rss:
+  bbc:
+    top: "https://feeds.bbci.co.uk/news/rss.xml"
+    business: "https://feeds.bbci.co.uk/news/business/rss.xml"
+    politics: "https://feeds.bbci.co.uk/news/politics/rss.xml"
+    science: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+    technology: "https://feeds.bbci.co.uk/news/technology/rss.xml"
+    world: "https://feeds.bbci.co.uk/news/world/rss.xml"
+    uk: "https://feeds.bbci.co.uk/news/uk/rss.xml"
+    africa: "https://feeds.bbci.co.uk/news/world/africa/rss.xml"
+    asia: "https://feeds.bbci.co.uk/news/world/asia/rss.xml"
+    europe: "https://feeds.bbci.co.uk/news/world/europe/rss.xml"
+    latin_america: "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml"
+    middle_east: "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml"
+    us_canada: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml"
+
+  cbs:
+    top: "https://www.cbsnews.com/latest/rss/main"
+    politics: "https://www.cbsnews.com/latest/rss/politics"
+    science: "https://www.cbsnews.com/latest/rss/science"
+    technology: "https://www.cbsnews.com/latest/rss/technology"
+    world: "https://www.cbsnews.com/latest/rss/world"
+    us: "https://www.cbsnews.com/latest/rss/us"
+
+  abc:
+    top: "https://abcnews.go.com/abcnews/topstories"
+    politics: "https://abcnews.go.com/abcnews/politicsheadlines"
+    business: "https://abcnews.go.com/abcnews/moneyheadlines"
+    technology: "https://abcnews.go.com/abcnews/technologyheadlines"
+    us: "https://abcnews.go.com/abcnews/usheadlines"
+    international: "https://abcnews.go.com/abcnews/internationalheadlines"
+
+  cnn:
+    business: "http://rss.cnn.com/rss/cnn_business.rss"
+    world: "http://rss.cnn.com/rss/cnn_world.rss"
+    us: "http://rss.cnn.com/rss/cnn_us.rss"
+
+  npr:
+    world: "https://feeds.npr.org/1004/rss.xml"
+    national: "https://feeds.npr.org/1003/rss.xml"
+    business: "https://feeds.npr.org/1006/rss.xml"
+    science: "https://feeds.npr.org/1007/rss.xml"
+    middle_east: "https://feeds.npr.org/1009/rss.xml"
+    politics: "https://feeds.npr.org/1014/rss.xml"
+    economy: "https://feeds.npr.org/1017/rss.xml"
+    technology: "https://feeds.npr.org/1019/rss.xml"
+    europe: "https://feeds.npr.org/1124/rss.xml"
+    asia: "https://feeds.npr.org/1125/rss.xml"
+    africa: "https://feeds.npr.org/1126/rss.xml"
+    latin_america: "https://feeds.npr.org/1127/rss.xml"

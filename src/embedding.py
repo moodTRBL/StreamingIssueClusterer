@@ -2,7 +2,7 @@ import logging
 
 from sentence_transformers import SentenceTransformer
 
-from .model import IssueEmbedding
+from model import IssueEmbedding
 
         
 class Vectorizer:

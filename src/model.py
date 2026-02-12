@@ -16,14 +16,15 @@ class MatchCandidate(BaseModel):
     score: float
     similarity: float
 
-class Source:
+class Source(BaseModel):
     url: str
     reference: str
     category: str
 
 
-class CrawlItem:
+class CrawlItem(BaseModel):
     title: str
     content: str
     source: Source
-    published_at: datetime
+    url: str
+    published_at: datetime.datetime

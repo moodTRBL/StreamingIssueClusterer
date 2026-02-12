@@ -5,6 +5,9 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import hashlib
+import os
+from pathlib import Path
 from typing import Any, Protocol
 
 
@@ -29,6 +32,45 @@ class IssueEmbeddingRow:
     dense: list[float]
 
 
+def _load_dotenv_file(path: str = ".env") -> dict[str, str]:
+    env_path = Path(path)
+    if not env_path.exists():
+        raise ValueError(".env file not found")
+
+    values: dict[str, str] = {}
+    for raw in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+def _ensure_database_url_from_dotenv(path: str = ".env") -> None:
+    if os.getenv("DATABASE_URL", "").strip():
+        return
+
+    values = _load_dotenv_file(path)
+    required = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_SSLMODE"]
+    missing = [key for key in required if not values.get(key, "").strip()]
+    if missing:
+        raise ValueError(f"missing required .env values: {', '.join(missing)}")
+
+    dsn = (
+        f"host={values['DB_HOST']} "
+        f"port={values['DB_PORT']} "
+        f"user={values['DB_USER']} "
+        f"password={values['DB_PASSWORD']} "
+        f"dbname={values['DB_NAME']} "
+        f"sslmode={values['DB_SSLMODE']}"
+    )
+    os.environ["DATABASE_URL"] = dsn
+
+
+_ensure_database_url_from_dotenv()
+
+
 class IssueRepository(Protocol):
     def create(self, ctx: object, title: str, summary: str, status: int) -> int:
         """새 이슈를 생성하고 식별자를 반환한다."""
@@ -41,6 +83,17 @@ class IssueRepository(Protocol):
 
 
 class ArticleRepository(Protocol):
+    def create(
+        self,
+        ctx: object,
+        title: str,
+        content: str,
+        source: str,
+        url: str,
+        published_at: datetime | None,
+    ) -> int:
+        """기사를 생성하고 식별자를 반환한다."""
+
     def list_by_issue_id(self, ctx: object, issue_id: int) -> list[ArticleRow]:
         """특정 issue_id 를 가진 기사 목록을 조회한다."""
 
@@ -63,19 +116,20 @@ class IssueEmbeddingRepository(Protocol):
 
 
 class PostgresIssueRepository:
-    def __init__(self, conn: Any, table: str = "issues") -> None:
+    def __init__(self, conn: Any, table: str = "issue") -> None:
         self._conn = conn
         self._table = table
 
     def create(self, ctx: object, title: str, summary: str, status: int) -> int:
+        del status
         now = datetime.now(timezone.utc)
         sql = f"""
-            INSERT INTO {self._table} (title, summary, status, article_count, created_at, updated_at)
+            INSERT INTO {self._table} (title, content, article_count, started_at, updated_at, created_at)
             VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """
         with _cursor(self._resolve_conn(ctx)) as cur:
-            cur.execute(sql, (title, summary, status, 1, now, now))
+            cur.execute(sql, (title, summary, 1, now, now, now))
             row = cur.fetchone()
             if row is None:
                 raise RuntimeError("failed to create issue")
@@ -116,9 +170,34 @@ class PostgresIssueRepository:
 
 
 class PostgresArticleRepository:
-    def __init__(self, conn: Any, table: str = "articles") -> None:
+    def __init__(self, conn: Any, table: str = "article") -> None:
         self._conn = conn
         self._table = table
+
+    def create(
+        self,
+        ctx: object,
+        title: str,
+        content: str,
+        source: str,
+        url: str,
+        published_at: datetime | None,
+    ) -> int:
+        title_hash = hashlib.sha256(title.strip().encode("utf-8")).hexdigest()
+        now = datetime.now(timezone.utc)
+        sql = f"""
+            INSERT INTO {self._table} (
+                issue_id, title, content, source, url, title_hash, created_at, published_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """
+        with _cursor(self._resolve_conn(ctx)) as cur:
+            cur.execute(sql, (0, title, content, source, url, title_hash, now, published_at))
+            row = cur.fetchone()
+            if row is None:
+                raise RuntimeError("failed to create article")
+        return int(row[0])
 
     def list_by_issue_id(self, ctx: object, issue_id: int) -> list[ArticleRow]:
         sql = f"""
@@ -151,7 +230,7 @@ class PostgresIssueEmbeddingRepository:
     def __init__(
         self,
         conn: Any,
-        table: str = "issue_embeddings",
+        table: str = "issue_embedding",
         similarity_limit: int = 20,
     ) -> None:
         self._conn = conn

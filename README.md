@@ -72,3 +72,5 @@
 $$C_{new} = \frac{(C_{old} \times N) + V_{new}}{N + 1}$$
 
 *(N: Number of articles in the cluster)*
+
+참고 논문: https://aclanthology.org/2021.eacl-main.198.pdf

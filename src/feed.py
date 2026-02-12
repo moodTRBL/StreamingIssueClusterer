@@ -13,8 +13,8 @@ from urllib.request import Request, urlopen
 
 import yaml
 
-from .models import CrawlItem, Source
-from .ports import NewsScraper
+from model import CrawlItem, Source
+from scrap import NewsScraper
 
 
 @dataclass(slots=True)
@@ -31,15 +31,13 @@ class RssFetcher:
         self.count = count
         self.scraper = scraper
 
-    def get_sources(self, config_path: str = "resources/config.yml", include_state: bool = True) -> list[Source]:
+    def get_sources(self, config_path: str = "resources/config.yml") -> list[Source]:
         """config.yml의 rss 목록을 Source 리스트로 변환한다."""
         config = _load_config(config_path)
         rss_config = config.get("rss", {})
 
         sources: list[Source] = []
         for reference, categories in rss_config.items():
-            if not include_state and reference == "state":
-                continue
             for category, url in categories.items():
                 sources.append(Source(url=url, reference=reference or "None", category=category))
         return sources
@@ -74,6 +72,7 @@ class RssFetcher:
                     title=rss.title,
                     content=content_list[0],
                     source=source,
+                    url=rss.link,
                     published_at=published_at,
                 )
             )
@@ -85,11 +84,10 @@ def get_feeds(
     ctx: object,
     fetcher: RssFetcher,
     config_path: str = "resources/config.yml",
-    include_state: bool = True,
     max_workers: int = 8,
 ) -> list[CrawlItem]:
     """전체 RSS 소스를 병렬 수집한다."""
-    sources = fetcher.get_sources(config_path=config_path, include_state=include_state)
+    sources = fetcher.get_sources(config_path=config_path)
     if not sources:
         return []
 
@@ -107,17 +105,25 @@ def get_feeds(
     return results
 
 
-def get_all_feeds(ctx: object, fetcher: RssFetcher, config_path: str = "resources/config.yml") -> list[CrawlItem]:
-    """state 포함 전체 RSS를 병렬 수집한다."""
-    return get_feeds(ctx, fetcher, config_path=config_path, include_state=True)
-
-
 def _load_config(config_path: str) -> dict:
     path = Path(config_path)
     if not path.exists():
         raise ValueError(f"config not found: {config_path}")
     with path.open("r", encoding="utf-8") as file:
-        return yaml.safe_load(file) or {}
+        config = yaml.safe_load(file) or {}
+
+    rss = config.get("rss")
+    if rss is None or not isinstance(rss, dict):
+        raise ValueError("invalid config: 'rss' must be a mapping")
+
+    for reference, categories in rss.items():
+        if not isinstance(categories, dict):
+            raise ValueError(f"invalid config: rss.{reference} must be a mapping")
+        for category, url in categories.items():
+            if not isinstance(url, str) or not url:
+                raise ValueError(f"invalid config: rss.{reference}.{category} must be a non-empty string")
+
+    return config
 
 
 def _http_get(url: str) -> bytes:
