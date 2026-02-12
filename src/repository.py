@@ -1,4 +1,4 @@
-"""Cluster 서비스용 저장소 인터페이스와 Postgres 구현."""
+"""Cluster 서비스용 Postgres 저장소 구현."""
 
 from __future__ import annotations
 
@@ -6,19 +6,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Protocol
-
-
-class EmbeddingFeatureLike(Protocol):
-    dense: list[float]
-
-
-class EmbeddingResponseLike(Protocol):
-    embedding_feature: EmbeddingFeatureLike
-
-
-class EmbeddingManager(Protocol):
-    def generate(self, ctx: object, title: str, content: str) -> EmbeddingResponseLike:
-        """기사 텍스트를 임베딩 벡터로 변환한다."""
 
 
 @dataclass(slots=True)

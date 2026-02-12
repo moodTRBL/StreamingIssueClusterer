@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import math
 from datetime import datetime, timezone
+from typing import Any
 
 from .model import IssueEmbedding, MatchCandidate
-from .repository import ArticleRepository, EmbeddingManager, IssueEmbeddingRepository, IssueRepository
+from .repository import ArticleRepository, IssueEmbeddingRepository, IssueRepository
 
 LAMBDA_CONST = 0.1
 ALPHA_CONST = 0.8
@@ -22,7 +23,7 @@ class ClusterService:
 
     def __init__(
         self,
-        embedding_manager: EmbeddingManager,
+        embedding_manager: Any,
         issue_repo: IssueRepository,
         article_repo: ArticleRepository,
         issue_embedding_repo: IssueEmbeddingRepository,
