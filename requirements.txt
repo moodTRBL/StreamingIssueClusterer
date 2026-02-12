@@ -1,0 +1,5 @@
+pydantic
+sentence-transformers
+psycopg2-binary
+PyYAML
+beautifulsoup4

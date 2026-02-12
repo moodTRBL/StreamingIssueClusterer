@@ -74,3 +74,45 @@ $$C_{new} = \frac{(C_{old} \times N) + V_{new}}{N + 1}$$
 *(N: Number of articles in the cluster)*
 
 참고 논문: https://aclanthology.org/2021.eacl-main.198.pdf
+
+--
+
+## 실행 방법
+
+### 1. 사전 준비
+
+`uv`가 설치되어 있지 않다면 아래 명령어로 설치해주세요.
+
+```bash
+# macOS / Linux
+curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+
+# Windows (PowerShell)
+powershell -c "irm [https://astral.sh/uv/install.ps1](https://astral.sh/uv/install.ps1) | iex"
+```
+
+### 2. 가상환경 생성 및 활성화
+```bash
+# 가상환경 생성 (.venv 폴더가 생성됩니다)
+uv venv
+
+# 가상환경 활성화
+# macOS / Linux
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+```
+
+### 3. 의존성 패키지 설치
+```bash
+uv pip install -r requirements.txt
+```
+
+### 4. 환경 변수 설정
+`.env`파일에서 데이터베이스 연결을 위해 환경변수를 넣어주세요.
+
+### 5. 서비스 싫행
+```bash
+python src/api.py
+```
